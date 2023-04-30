@@ -1,0 +1,9 @@
+*.py[cdo]
+*.so
+
+__pycache__/
+build/
+dist/
+*.egg-info/
+
+algojudge/comparators/_compare.c
