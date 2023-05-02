@@ -7,3 +7,4 @@ dist/
 *.egg-info/
 
 algojudge/comparators/_compare.c
+algojudge/local_config.py

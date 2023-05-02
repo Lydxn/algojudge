@@ -87,5 +87,6 @@ if __name__ == '__main__':
 
     # Just a hack to get rid of the "Address is already in use" message.
     ThreadingTCPServer.allow_reuse_address = True
+
     with ThreadingTCPServer(config.SERVER_ADDRESS, JudgeHandler) as server:
         server.serve_forever()

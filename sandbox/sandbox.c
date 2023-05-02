@@ -29,9 +29,10 @@
 #define BOX_WRITABLE  0x001
 #define BOX_DEV       0x002
 
-static const char *optstring = "b:Df:Im:p:T:t:R";
+static const char *optstring = "b:d:Df:Im:p:T:t:R";
 static const struct option longopts[] = {
     { "box-name",        1, NULL, 'b' },
+    { "box-root",        1, NULL, 'd' },
     { "del",             0, NULL, 'D' },
     { "max-fsize",       1, NULL, 'f' },
     { "init",            0, NULL, 'I' },
@@ -44,7 +45,7 @@ static const struct option longopts[] = {
 };
 
 static char **command;
-static char *box_basedir, box_path[256];
+static char *box_root, box_path[256];
 char *box_name;
 
 static uid_t host_uid;
@@ -160,6 +161,7 @@ static void fs_setup() {
     populate_box("/lib", "lib", NULL, 0);
     populate_box("/lib64", "lib64", NULL, 0);
     populate_box("/usr/bin", "usr/bin", NULL, 0);
+    populate_box("/usr/include", "usr/include", NULL, 0);
     populate_box("/usr/lib", "usr/lib", NULL, 0);
     populate_box(NULL, "proc", "proc", 0);
     populate_box(NULL, "tmp", "tmpfs", BOX_WRITABLE);
@@ -404,10 +406,6 @@ int main(int argc, char *argv[]) {
     if (getuid() != 0 || getgid() != 0)
         fail(1, "You must run this program as root.\n");
 
-    // The base directory for holding all sandboxes.
-    if ((box_basedir = getenv("BOX_BASEDIR")) == NULL)
-        fail(1, "'BOX_BASEDIR' environment variable is not set.\n");
-
     int opt, mode = 0;
 
     while ((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
@@ -421,7 +419,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'b':
             box_name = optarg;
-            snprintf(box_path, sizeof(box_path), "%s/%s", box_basedir, box_name);
+            break;
+        case 'd':
+            box_root = optarg;
             break;
         case 'f':
             max_fsize_kb = uint_parse(optarg);
@@ -440,6 +440,8 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
+
+    snprintf(box_path, sizeof(box_path), "%s/%s", box_root, box_name);
 
     switch (mode) {
     case 'D':

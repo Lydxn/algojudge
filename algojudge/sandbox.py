@@ -1,9 +1,7 @@
-import os
+from algojudge import config
 from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen, PIPE
-
-BOX_BASEDIR = os.environ['BOX_BASEDIR']
 
 
 class SandboxResult:
@@ -69,7 +67,8 @@ class Sandbox:
     def __init__(self, box_name):
         self.box_name = Path(box_name)
 
-        self.root_path = BOX_BASEDIR / self.box_name
+        self.box_root = Path(config.BOX_ROOT)
+        self.root_path = self.box_root / self.box_name
 
         self.home_path = self.root_path / 'home'
         self.stdin_path = self.root_path / 'in'
@@ -77,7 +76,7 @@ class Sandbox:
         self.stderr_path = self.root_path / 'err'
 
     def __enter__(self):
-        proc = Popen(['sandbox', f'--box-name={self.box_name}', '--init'], stdout=PIPE, stderr=PIPE)
+        proc = Popen([*self.get_opts(), '--init'], stdout=PIPE, stderr=PIPE)
         _, stderr = proc.communicate()
 
         if proc.returncode > 0:
@@ -85,8 +84,8 @@ class Sandbox:
 
         return self
 
-    def run(self, command, config):
-        proc = Popen(['sandbox', f'--box-name={self.box_name}', '--run', *config.get_opts(), '--', *command],
+    def run(self, command, conf):
+        proc = Popen([*self.get_opts(), '--run', *conf.get_opts(), '--', *command],
                      stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
 
@@ -100,6 +99,9 @@ class Sandbox:
 
         return SandboxResult(**result)
 
+    def get_opts(self):
+        return ['sandbox', f'--box-root={self.box_root}', f'--box-name={self.box_name}']
+
     def stdout(self):
         with open(self.stdout_path, 'rb') as f:
             return f.read()
@@ -109,7 +111,7 @@ class Sandbox:
             return f.read()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        proc = Popen(['sandbox', f'--box-name={self.box_name}', '--del'], stdout=PIPE, stderr=PIPE)
+        proc = Popen([*self.get_opts(), '--del'], stdout=PIPE, stderr=PIPE)
         _, stderr = proc.communicate()
 
         if proc.returncode != 0:

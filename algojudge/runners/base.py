@@ -133,6 +133,8 @@ class CompiledRunner(Runner, register=False):
         # decides to bug out on us or cause a compiler bomb.
         self.compiled_result = self.compile_box.run(self.get_compile_args(), config.SANDBOX_COMPILE_CONFIG)
 
+        print(self.compile_box.stdout(), self.compile_box.stderr(), self.compiled_result.exitcode)
+
         if self.compiled_result.is_tle():
             raise CompileError('compilation took too long :(')
         if self.compilation_failed():
